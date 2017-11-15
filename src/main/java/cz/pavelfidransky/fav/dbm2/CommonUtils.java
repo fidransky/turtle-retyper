@@ -41,8 +41,13 @@ public class CommonUtils {
     }
 
     public static RetypeStrategy estimateRetypeStrategy(Literal literal) {
-        String dataType = literal.getDatatype().getJavaClass().getName();
-        Optional<RetypeStrategy> strategy = RetypeStrategy.from(dataType);
+        Optional<RetypeStrategy> strategy;
+        if (literal.getDatatype().getJavaClass() != null) {
+            String dataType = literal.getDatatype().getJavaClass().getName();
+            strategy = RetypeStrategy.from(dataType);
+        } else {
+            strategy = Optional.empty();
+        }
 
         if (strategy.isPresent() && !strategy.get().equals(RetypeStrategy.TO_STRING)) {
             return strategy.get();

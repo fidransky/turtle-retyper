@@ -91,6 +91,7 @@ public class GUIWindow extends JFrame {
 
         TurtleRetyper retyper = new TurtleRetyper(inModel, strategies);
         Model outModel = retyper.retype();
+        outModel.setNsPrefixes(inModel.getNsPrefixMap());
 
         saveTurtleFile(outModel);
     }

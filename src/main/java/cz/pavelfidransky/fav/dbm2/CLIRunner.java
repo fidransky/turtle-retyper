@@ -61,6 +61,7 @@ public class CLIRunner {
 
         TurtleRetyper retyper = new TurtleRetyper(inModel, strategies);
         Model outModel = retyper.retype();
+        outModel.setNsPrefixes(inModel.getNsPrefixMap());
 
         saveTurtleFile(outModel);
 

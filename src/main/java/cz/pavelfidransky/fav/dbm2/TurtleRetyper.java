@@ -22,6 +22,10 @@ public class TurtleRetyper {
      * Chosen retyping strategies for each predicate.
      */
     protected Map<String, RetypeStrategy> strategies;
+    /**
+     * Model of output turtle statements.
+     */
+    protected Model outModel;
 
     /**
      * Default constructor accepting iterator of turtle statements as argument.
@@ -30,12 +34,13 @@ public class TurtleRetyper {
     public TurtleRetyper(Model inModel, Map<String, RetypeStrategy> strategies) {
         this.inModel = inModel;
         this.strategies = strategies;
+
+        this.outModel = ModelFactory.createDefaultModel();
+        this.outModel.setNsPrefixes(inModel.getNsPrefixMap());
     }
 
 
     public Model retype() {
-        Model outModel = ModelFactory.createDefaultModel();
-
         StmtIterator iterator = inModel.listStatements();
         while (iterator.hasNext()) {
             Statement statement = iterator.next();

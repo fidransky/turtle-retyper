@@ -49,13 +49,7 @@ public class Retyper {
                 return string;
 
             default:
-                Object retypeWorker = strategy.getJavaClass().newInstance();
-                if (!(retypeWorker instanceof IRetypeWorker)) {
-                    throw new UnsupportedOperationException(strategy.getJavaClass() + " does not implement " + IRetypeWorker.class.getName() + " interface!");
-                }
-
-                // retype using custom worker
-                return strategy.getJavaClass().getMethod("parse", String.class).invoke(retypeWorker, string);
+                throw new UnsupportedOperationException("Retyper does not support strategy " + strategy.name() + ".");
         }
     }
 

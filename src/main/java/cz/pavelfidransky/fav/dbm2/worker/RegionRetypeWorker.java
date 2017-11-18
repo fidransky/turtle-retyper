@@ -1,8 +1,9 @@
 package cz.pavelfidransky.fav.dbm2.worker;
 
-import java.util.Arrays;
-
-import cz.pavelfidransky.fav.dbm2.datatype.Region;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
 
 /**
  * Custom retype worker for parsing region string to enumerate.
@@ -12,12 +13,22 @@ import cz.pavelfidransky.fav.dbm2.datatype.Region;
  * @author Pavel Fidransky [jsem@pavelfidransky.cz]
  * @see cz.pavelfidransky.fav.dbm2.datatype.Region
  */
-public class RegionRetypeWorker implements IRetypeWorker<Region> {
+public class RegionRetypeWorker implements IRetypeWorker {
 
     @Override
-    public Region parse(String string) throws IllegalArgumentException {
-        return Arrays.stream(Region.values()).filter(region -> region.getRegion().equals(string)).findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Region \"" + string + "\" is not supported!"));
+    public void retype(Model outModel, Statement inStatement) throws IllegalArgumentException {
+        String object = inStatement.getObject().asLiteral().getLexicalForm();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(outModel.getNsPrefixURI("id"));
+        sb.append(inStatement.getPredicate().getLocalName());
+        sb.append("_");
+        sb.append(object);
+
+        Resource subject = inStatement.getSubject();
+        Property predicate = outModel.getProperty(sb.toString());
+
+        outModel.add(subject, predicate, object);
     }
 
 }

@@ -1,9 +1,12 @@
 package cz.pavelfidransky.fav.dbm2;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.rdf.model.impl.StatementImpl;
+
+import cz.pavelfidransky.fav.dbm2.worker.IRetypeWorker;
 
 /**
  * Accepts RDF model and returns the same model with values retyped to datatypes selected by user.
@@ -58,22 +61,52 @@ public class TurtleRetyper {
 
             RetypeStrategy strategy = strategies.get(predicateFullName);
 
-            RDFNode retypedObject;
             if (!(object instanceof Literal)) {
-                retypedObject = object;
+                outModel.add(statement);
             } else {
                 try {
-                    retypedObject = outModel.createTypedLiteral(Retyper.retype(object.asLiteral().getLexicalForm(), strategy));
+                    Object retypedObject = Retyper.retype(object.asLiteral().getLexicalForm(), strategy);
+
+                    Statement retypedStatement = new StatementImpl(subject, predicate, outModel.createTypedLiteral(retypedObject));
+                    outModel.add(retypedStatement);
+
+                } catch (UnsupportedOperationException e) {
+                    retypeUsingCustomStrategy(statement, strategy);
+
                 } catch (Exception e) {
                     System.out.println("Could not retype \"" + object.asLiteral().getLexicalForm() + "\" using " + strategy.getJavaClass().getName() + " due to following error:\n" + e.getCause());
-                    retypedObject = object;
+                    outModel.add(statement);
                 }
             }
-
-            outModel.add(new StatementImpl(subject, predicate, retypedObject));
         }
 
         return outModel;
+    }
+
+    private void retypeUsingCustomStrategy(Statement statement, RetypeStrategy strategy) {
+        Object retypeWorker;
+        try {
+            retypeWorker = strategy.getJavaClass().newInstance();
+
+        } catch (InstantiationException|IllegalAccessException e) {
+            outModel.add(statement);
+            return;
+        }
+
+        if (!(retypeWorker instanceof IRetypeWorker)) {
+            throw new UnsupportedOperationException(strategy.getJavaClass() + " does not implement " + IRetypeWorker.class.getName() + " interface.");
+        }
+
+        try {
+            strategy.getJavaClass().getMethod("retype", Model.class, Statement.class).invoke(retypeWorker, outModel, statement);
+
+        } catch (NoSuchMethodException|InvocationTargetException|IllegalAccessException e) {
+            throw new UnsupportedOperationException(strategy.getJavaClass() + " does not implement " + IRetypeWorker.class.getName() + " interface correctly.");
+
+        } catch (Exception e) {
+            System.out.println("Could not retype " + statement.toString() + " using " + strategy.getJavaClass().getName() + " due to following error:\n" + e.getCause());
+            outModel.add(statement);
+        }
     }
 
 }
